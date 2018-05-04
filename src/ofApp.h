@@ -49,7 +49,6 @@ class ofApp : public ofBaseApp{
 		void drawOct(TreeNode & node, int numLevels, int level);
 		void recSearch(Ray ray, TreeNode &node, ofVec3f &selected);
 		ofEasyCam cam;
-		ofxAssimpModelLoader mars, rover;
 		ofLight light;
 		Box boundingBox;
 		vector<Box> level1, level2, level3;
@@ -60,6 +59,7 @@ class ofApp : public ofBaseApp{
 		bool bDisplayPoints;
 		bool bPointSelected;
 		
+		//Octree part
 		bool bRoverLoaded;
 		bool bTerrainSelected;
 		float responseTime;
@@ -68,4 +68,14 @@ class ofApp : public ofBaseApp{
 		ofMesh mesh;
 		TreeNode root;
 		const float selectionRange = 4.0;
+
+		//lighting & lander part
+		ofxAssimpModelLoader moon, lander; //model = lander
+		ofLight keyLight, fillLight, rimLight;
+		ofPlanePrimitive plane;
+		ofMaterial planeMaterial;
+
+		bool bModelLoaded = false;
+		bool bPlaneLoaded = false;
+		bool bWireFrame = false;
 };

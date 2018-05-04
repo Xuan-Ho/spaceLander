@@ -47,22 +47,65 @@ void ofApp::setup(){
 	cam.disableMouseInput();
 	ofEnableSmoothing();
 	ofEnableDepthTest();
+	ofEnableLighting();
 
+	// Setup 3 - Light System
+	// 
+	keyLight.setup();
+	keyLight.enable();
+	keyLight.setAreaLight(1, 1);
+	keyLight.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
+	keyLight.setDiffuseColor(ofFloatColor(1, 1, 1));
+	keyLight.setSpecularColor(ofFloatColor(1, 1, 1));
+
+	keyLight.rotate(45, ofVec3f(0, 1, 0));
+	keyLight.rotate(-45, ofVec3f(1, 0, 0));
+	keyLight.setPosition(5, 5, 5);
+
+	fillLight.setup();
+	fillLight.enable();
+	fillLight.setSpotlight();
+	fillLight.setScale(.05);
+	fillLight.setSpotlightCutOff(15);
+	fillLight.setAttenuation(2, .001, .001);
+	fillLight.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
+	fillLight.setDiffuseColor(ofFloatColor(1, 1, 1));
+	fillLight.setSpecularColor(ofFloatColor(0, 34, 0));
+	fillLight.rotate(-10, ofVec3f(1, 0, 0));
+	fillLight.rotate(-45, ofVec3f(0, 1, 0));
+	fillLight.setPosition(-5, 5, 5);
+
+	rimLight.setup();
+	rimLight.enable();
+	rimLight.setSpotlight();
+	rimLight.setScale(.05);
+	rimLight.setSpotlightCutOff(30);
+	rimLight.setAttenuation(.2, .001, .001);
+	rimLight.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
+	rimLight.setDiffuseColor(ofFloatColor(1, 1, 1));
+	rimLight.setSpecularColor(ofFloatColor(1, 1, 1));
+	rimLight.rotate(180, ofVec3f(0, 1, 0));
+	rimLight.setPosition(0, 5, -7);
+
+	
 	// setup rudimentary lighting 
 	//
 	initLightingAndMaterials();
 
-	mars.loadModel("geo/mars-low-v2.obj");
-	mars.setScaleNormalization(false);
+	//load moon model  moon-houdini
+	moon.loadModel("geo/moon-houdini.obj");
+	moon.setScaleNormalization(false);
+	lander.loadModel("geo/lander.obj");
+	lander.setScaleNormalization(false);
 
-	boundingBox = meshBounds(mars.getMesh(0));
+	boundingBox = meshBounds(moon.getMesh(0));
 
 	//  Test Box Subdivide
 	//
 	//subDivideBox8(boundingBox, level1);
 	//subDivideBox8(level1[0], level2);
 	//subDivideBox8(level2[0], level3);
-	mesh = mars.getMesh(0);
+	mesh = moon.getMesh(0);
 	for (int i = 0; i < mesh.getNumVertices(); i++) {
 		root.points.push_back(i);
 	}
@@ -81,30 +124,31 @@ void ofApp::update() {
 }
 //--------------------------------------------------------------
 void ofApp::draw(){
-
+	
 //	ofBackgroundGradient(ofColor(20), ofColor(0));   // pick your own backgroujnd
 	ofBackground(ofColor::black);
 //	cout << ofGetFrameRate() << endl;
 
 	cam.begin();
 	ofPushMatrix();
+	
 	if (bWireframe) {                    // wireframe mode  (include axis)
 		ofDisableLighting();
 		ofSetColor(ofColor::slateGray);
-		mars.drawWireframe();
+		moon.drawWireframe();
 		if (bRoverLoaded) {
-			rover.drawWireframe();
-			if (!bTerrainSelected) drawAxis(rover.getPosition());
+			lander.drawWireframe();
+			if (!bTerrainSelected) drawAxis(lander.getPosition());
 		}
 		if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
 	}
 	else {
 		ofEnableLighting();              // shaded mode
-		mars.drawFaces();
+		moon.drawFaces();
 
 		if (bRoverLoaded) {
-			rover.drawFaces();
-			if (!bTerrainSelected) drawAxis(rover.getPosition());
+			lander.drawFaces();
+			if (!bTerrainSelected) drawAxis(lander.getPosition());
 		}
 		if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
 	}
@@ -113,7 +157,7 @@ void ofApp::draw(){
 	if (bDisplayPoints) {                // display points as an option    
 		glPointSize(3);
 		ofSetColor(ofColor::green);
-		mars.drawVertices();
+		moon.drawVertices();
 	}
 
 	// highlight selected point (draw sphere around selected point)
@@ -126,6 +170,13 @@ void ofApp::draw(){
 	ofNoFill();
 	ofSetColor(ofColor::white);
 	drawBox(boundingBox);
+
+	// draw all the lights 
+	//
+	ofSetColor(ofColor::aqua);
+	keyLight.draw();
+	fillLight.draw();
+	rimLight.draw();
 
 	ofSetColor(ofColor::red);
 	for (int i=0; i < level1.size(); i++)
@@ -154,6 +205,7 @@ void ofApp::draw(){
 		}
 	}*/
 	
+
 	ofPopMatrix();
 	cam.end();
 }
@@ -427,7 +479,7 @@ void ofApp::mouseReleased(int x, int y, int button) {
 //
 bool ofApp::doPointSelection() {
 
-	ofMesh mesh = mars.getMesh(0);
+	ofMesh mesh = moon.getMesh(0);
 	int n = mesh.getNumVertices();
 	float nearestDistance = 0;
 	int nearestIndex = 0;
@@ -557,10 +609,10 @@ void ofApp::dragEvent(ofDragInfo dragInfo) {
 	ofVec3f point;
 	mouseIntersectPlane(ofVec3f(0, 0, 0), cam.getZAxis(), point);
 
-	if (rover.loadModel(dragInfo.files[0])) {
-		rover.setScaleNormalization(false);
-		rover.setScale(.005, .005, .005);
-		rover.setPosition(point.x, point.y, point.z);
+	if (lander.loadModel(dragInfo.files[0])) {
+		lander.setScaleNormalization(false);
+		lander.setScale(.005, .005, .005);
+		lander.setPosition(point.x, point.y, point.z);
 		bRoverLoaded = true;
 	}
 	else cout << "Error: Can't load model" << dragInfo.files[0] << endl;
