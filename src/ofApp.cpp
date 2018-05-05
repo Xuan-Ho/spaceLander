@@ -46,7 +46,7 @@ void ofApp::setup(){
 	ofSetVerticalSync(true);
 	cam.disableMouseInput();
 	ofEnableSmoothing();
-	ofEnableDepthTest();
+	//ofEnableDepthTest(); //If enable, it would blackout the slider GUI so i disabled it 
 	ofEnableLighting();
 
 	// Setup 3 - Light System
@@ -87,7 +87,31 @@ void ofApp::setup(){
 	rimLight.rotate(180, ofVec3f(0, 1, 0));
 	rimLight.setPosition(0, 5, -7);
 
-	
+
+	// Particle Slider Setup
+	gui.setup();
+	gui.add(velocity.setup("Initial Velocity", ofVec3f(0, 20, 0), ofVec3f(0, 0, 0), ofVec3f(100, 100, 100)));
+	gui.add(lifespan.setup("Lifespan", 2.0, .1, 10.0));
+	gui.add(rate.setup("Rate", 1.0, .5, 60.0));
+	gui.add(damping.setup("Damping", .99, .1, 1.0));
+	gui.add(gravity.setup("Gravity", 10, 1, 20));
+	gui.add(radius.setup("Radius", .1, .01, .3));
+	gui.add(mass.setup("Mass", 10, .01, 100));
+	bHide = false;
+
+	//emitter Setup 
+	emitter.setOneShot(true);
+	emitter.particleColor = ofColor::chocolate;
+	emitter.setEmitterType(RadialEmitter);
+	emitter.setGroupSize(10);
+	emitter.setLifespan(0.4);
+	emitter.setVelocity(ofVec3f(550, 300, 100));
+	emitter.setParticleRadius(10);
+	emitter.setPosition(ofVec3f(ofGetWindowWidth() / 2 - 650, 30, 0));
+	emitter.sys->addForce(new TurbulenceForce(ofVec3f(-2, -1, -3), ofVec3f(1, 2, 5)));
+	emitter.sys->addForce(new GravityForce(ofVec3f(0, -gravity, 0)));
+	emitter.sys->addForce(new ImpulseRadialForce(5000));
+
 	// setup rudimentary lighting 
 	//
 	initLightingAndMaterials();
@@ -120,7 +144,17 @@ void ofApp::setup(){
 // incrementally update scene (animation)
 //
 void ofApp::update() {
-	
+	emitter.update();
+	ofSeedRandom();
+
+	//First emitter
+	emitter.setLifespan(lifespan);
+	emitter.setVelocity(velocity);
+	emitter.setRate(rate);
+	emitter.setParticleRadius(radius);
+	emitter.setMass(mass);
+	emitter.update();
+
 }
 //--------------------------------------------------------------
 void ofApp::draw(){
@@ -129,6 +163,9 @@ void ofApp::draw(){
 	ofBackground(ofColor::black);
 //	cout << ofGetFrameRate() << endl;
 
+	// draw the GUI
+	if (!bHide) gui.draw();
+
 	cam.begin();
 	ofPushMatrix();
 	
@@ -136,6 +173,7 @@ void ofApp::draw(){
 		ofDisableLighting();
 		ofSetColor(ofColor::slateGray);
 		moon.drawWireframe();
+		lander.drawWireframe();
 		if (bRoverLoaded) {
 			lander.drawWireframe();
 			if (!bTerrainSelected) drawAxis(lander.getPosition());
@@ -145,7 +183,7 @@ void ofApp::draw(){
 	else {
 		ofEnableLighting();              // shaded mode
 		moon.drawFaces();
-
+		lander.drawFaces();
 		if (bRoverLoaded) {
 			lander.drawFaces();
 			if (!bTerrainSelected) drawAxis(lander.getPosition());
@@ -158,6 +196,7 @@ void ofApp::draw(){
 		glPointSize(3);
 		ofSetColor(ofColor::green);
 		moon.drawVertices();
+		lander.drawVertices();
 	}
 
 	// highlight selected point (draw sphere around selected point)
@@ -204,10 +243,12 @@ void ofApp::draw(){
 			}
 		}
 	}*/
-	
+
+	emitter.draw();//draw emitter
 
 	ofPopMatrix();
 	cam.end();
+	
 }
 
 // 
@@ -252,6 +293,7 @@ void ofApp::keyPressed(int key) {
 		break;
 	case 'H':
 	case 'h':
+		bHide = !bHide;
 		break;
 	case 'r':
 		cam.reset();
@@ -272,6 +314,8 @@ void ofApp::keyPressed(int key) {
 	case 'w':
 		toggleWireframeMode();
 		break;
+	case ' ':
+		emitter.start();
 	case OF_KEY_ALT:
 		cam.enableMouseInput();
 		bAltKeyDown = true;

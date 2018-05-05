@@ -1,11 +1,13 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxGui.h"
 #include  "ofxAssimpModelLoader.h"
 #include "box.h"
 #include "ray.h"
-
-
+#include "ParticleEmitter.h"
+#include "ParticleSystem.h"
+#include "Particle.h"
 
 class TreeNode {
 	public:
@@ -69,7 +71,7 @@ class ofApp : public ofBaseApp{
 		TreeNode root;
 		const float selectionRange = 4.0;
 
-		//lighting & lander part
+		////lighting & lander part
 		ofxAssimpModelLoader moon, lander; //model = lander
 		ofLight keyLight, fillLight, rimLight;
 		ofPlanePrimitive plane;
@@ -78,4 +80,20 @@ class ofApp : public ofBaseApp{
 		bool bModelLoaded = false;
 		bool bPlaneLoaded = false;
 		bool bWireFrame = false;
+
+		////emitter part
+		ParticleEmitter emitter;
+		// some simple sliders to play with parameters
+		//
+		bool bHide;
+		ofxFloatSlider mass;
+		ofxFloatSlider gravity;
+		ofxFloatSlider damping;
+		ofxFloatSlider radius;
+		ofxVec3Slider velocity;
+		ofxFloatSlider lifespan;
+		ofxFloatSlider randomizeLifespan;
+		ofxFloatSlider rate;
+		ofxPanel gui;
+		
 };
