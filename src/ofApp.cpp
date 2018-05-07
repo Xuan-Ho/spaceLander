@@ -40,6 +40,8 @@ void ofApp::setup(){
 	bRoverLoaded = false;
 	bTerrainSelected = true;
 //	ofSetWindowShape(1024, 768);
+
+	// Set up Camera 1
 	cam.setDistance(10);
 	cam.setNearClip(.1);
 	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
@@ -48,6 +50,13 @@ void ofApp::setup(){
 	ofEnableSmoothing();
 	//ofEnableDepthTest(); //If enable, it would blackout the slider GUI so i disabled it 
 	ofEnableLighting();
+
+	// Set up Camera 2
+	cam2.setDistance(30);
+	cam2.setNearClip(.1);
+	cam2.setFov(80);
+	cam2.disableMouseInput();
+
 
 	// Setup 3 - Light System
 	// 
@@ -166,7 +175,12 @@ void ofApp::draw(){
 	// draw the GUI
 	if (!bHide) gui.draw();
 
-	cam.begin();
+	// If statement used to display camera based on camNum
+	if (camNum == 1)
+		cam.begin();
+	else if (camNum == 2)
+		cam2.begin();
+
 	ofPushMatrix();
 	
 	if (bWireframe) {                    // wireframe mode  (include axis)
@@ -247,7 +261,11 @@ void ofApp::draw(){
 	emitter.draw();//draw emitter
 
 	ofPopMatrix();
-	cam.end();
+
+	if (camNum == 1)
+		cam.end();
+	else if (camNum == 2)
+		cam2.end();
 	
 }
 
@@ -282,6 +300,12 @@ void ofApp::drawAxis(ofVec3f location) {
 void ofApp::keyPressed(int key) {
 
 	switch (key) {
+	case '1':
+		camNum = 1; // Pressing number key changes value of camNum
+		break;
+	case '2':
+		camNum = 2;
+		break;
 	case 'C':
 	case 'c':
 		if (cam.getMouseInputEnabled()) cam.disableMouseInput();

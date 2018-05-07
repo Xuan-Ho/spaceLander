@@ -50,7 +50,8 @@ class ofApp : public ofBaseApp{
 		bool mouseIntersectPlane(ofVec3f planePoint, ofVec3f planeNorm, ofVec3f &point);
 		void drawOct(TreeNode & node, int numLevels, int level);
 		void recSearch(Ray ray, TreeNode &node, ofVec3f &selected);
-		ofEasyCam cam;
+		ofEasyCam cam, cam2, cam3; // Added new cameras
+		int camNum = 1; // Value used to cycle through cameras
 		ofLight light;
 		Box boundingBox;
 		vector<Box> level1, level2, level3;
