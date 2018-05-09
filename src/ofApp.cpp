@@ -57,6 +57,11 @@ void ofApp::setup(){
 	cam2.setFov(80);
 	cam2.disableMouseInput();
 
+	// Set up Camera 3
+	cam3.setDistance(50);
+	cam3.setNearClip(.1);
+	cam3.setFov(80);
+	cam3.disableMouseInput();
 
 	// Setup 3 - Light System
 	// 
@@ -164,6 +169,9 @@ void ofApp::update() {
 	emitter.setMass(mass);
 	emitter.update();
 
+	//cam2.lookAt(lander.getPosition()); // this should be keeping track of the 3D model
+	cam2.lookAt(keyLight.getPosition()); // testing it by looking at a light, uncomment top to keep track of 3D model
+	cam3.setPosition(lander.getPosition()); // camera 3 should be attached to 3D model, would need to test with moving model
 }
 //--------------------------------------------------------------
 void ofApp::draw(){
@@ -180,6 +188,8 @@ void ofApp::draw(){
 		cam.begin();
 	else if (camNum == 2)
 		cam2.begin();
+	else if (camNum == 3)
+		cam3.begin();
 
 	ofPushMatrix();
 	
@@ -266,6 +276,8 @@ void ofApp::draw(){
 		cam.end();
 	else if (camNum == 2)
 		cam2.end();
+	else if (camNum == 3)
+		cam3.end();
 	
 }
 
@@ -305,6 +317,9 @@ void ofApp::keyPressed(int key) {
 		break;
 	case '2':
 		camNum = 2;
+		break;
+	case '3':
+		camNum = 3;
 		break;
 	case 'C':
 	case 'c':
