@@ -63,6 +63,12 @@ void ofApp::setup(){
 	cam3.setFov(80);
 	cam3.disableMouseInput();
 
+	// Set up Camera 4
+	cam4.setDistance(50);
+	cam4.setNearClip(.1);
+	cam4.setFov(80);
+	cam4.disableMouseInput();
+
 	// Setup 3 - Light System
 	// 
 	keyLight.setup();
@@ -172,6 +178,8 @@ void ofApp::update() {
 	//cam2.lookAt(lander.getPosition()); // this should be keeping track of the 3D model
 	cam2.lookAt(keyLight.getPosition()); // testing it by looking at a light, uncomment top to keep track of 3D model
 	cam3.setPosition(lander.getPosition()); // camera 3 should be attached to 3D model, would need to test with moving model
+	cam4.setPosition(lander.getPosition()); // camera 4 attached to 3D model, but should be looking at ground
+	cam4.lookAt(ofVec3f(cam4.getPosition().x, cam4.getPosition().y - 10, cam4.getPosition().z));
 }
 //--------------------------------------------------------------
 void ofApp::draw(){
@@ -190,6 +198,8 @@ void ofApp::draw(){
 		cam2.begin();
 	else if (camNum == 3)
 		cam3.begin();
+	else if (camNum == 4)
+		cam4.begin();
 
 	ofPushMatrix();
 	
@@ -278,6 +288,8 @@ void ofApp::draw(){
 		cam2.end();
 	else if (camNum == 3)
 		cam3.end();
+	else if (camNum == 4)
+		cam4.end();
 	
 }
 
@@ -321,6 +333,9 @@ void ofApp::keyPressed(int key) {
 	case '3':
 		camNum = 3;
 		break;
+	case '4':
+		camNum = 4;
+		break;
 	case 'C':
 	case 'c':
 		if (cam.getMouseInputEnabled()) cam.disableMouseInput();
@@ -341,7 +356,7 @@ void ofApp::keyPressed(int key) {
 		savePicture();
 		break;
 	case 't':
-		setCameraTarget();
+		cam.lookAt(lander.getPosition()); // Free camera will look at 3D model
 		break;
 	case 'u':
 		break;
