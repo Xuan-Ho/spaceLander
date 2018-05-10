@@ -63,12 +63,6 @@ void ofApp::setup(){
 	cam3.setFov(80);
 	cam3.disableMouseInput();
 
-	// Set up Camera 4
-	cam4.setDistance(50);
-	cam4.setNearClip(.1);
-	cam4.setFov(80);
-	cam4.disableMouseInput();
-
 	// Setup 3 - Light System
 	// 
 	keyLight.setup();
@@ -114,7 +108,7 @@ void ofApp::setup(){
 	gui.add(lifespan.setup("Lifespan", 2.0, .1, 10.0));
 	gui.add(rate.setup("Rate", 1.0, .5, 60.0));
 	gui.add(damping.setup("Damping", .99, .1, 1.0));
-	gui.add(gravity.setup("Gravity", 10, 1, 20));
+	gui.add(gravity.setup("Gravity", 1, 1, 20));
 	gui.add(radius.setup("Radius", .1, .01, .3));
 	gui.add(mass.setup("Mass", 10, .01, 100));
 	bHide = false;
@@ -137,13 +131,25 @@ void ofApp::setup(){
 	initLightingAndMaterials();
 
 	//load moon model  moon-houdini
-	moon.loadModel("geo/moon-houdini.obj");
-	moon.setScaleNormalization(false);
 	lander.loadModel("geo/lander.obj");
 	lander.setScaleNormalization(false);
+	moon.loadModel("geo/moon-houdini.obj");
+	moon.setScaleNormalization(false);
+	
 
+	ship.position.set(0, 50, 0);
+	ship.lifespan = 1000000;
+	ship.radius =.1;
+	
+	lander.setPosition(ship.position.x,25,ship.position.z);
+	sys.add(ship);
+	engine.setRate(20);
+	engine.setParticleRadius(.10);
+	engine.visible = false;
+	sys.addForce(&thruster);
+	sys.addForce(new GravityForce(ofVec3f(0, -gravity, 0)));
 	boundingBox = meshBounds(moon.getMesh(0));
-
+	
 	//  Test Box Subdivide
 	//
 	//subDivideBox8(boundingBox, level1);
@@ -156,7 +162,9 @@ void ofApp::setup(){
 	root.Box = boundingBox;
 	buildTree(root, -1);
 	
-
+	glClearDepth(1.0f);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 	responseTime = 0.0;
 }
 
@@ -164,27 +172,30 @@ void ofApp::setup(){
 // incrementally update scene (animation)
 //
 void ofApp::update() {
+	engine.setPosition(sys.particles[0].position);
 	emitter.update();
 	ofSeedRandom();
-
+	collisionDetect();
+	engine.update();
 	//First emitter
+	lander.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
+	sys.update();
+	moon.update();
 	emitter.setLifespan(lifespan);
 	emitter.setVelocity(velocity);
 	emitter.setRate(rate);
 	emitter.setParticleRadius(radius);
 	emitter.setMass(mass);
 	emitter.update();
-
+	//emitter.setPosition(ofVec3f(v.x, v.y, v.z));
 	//cam2.lookAt(lander.getPosition()); // this should be keeping track of the 3D model
 	cam2.lookAt(keyLight.getPosition()); // testing it by looking at a light, uncomment top to keep track of 3D model
 	cam3.setPosition(lander.getPosition()); // camera 3 should be attached to 3D model, would need to test with moving model
-	cam4.setPosition(lander.getPosition()); // camera 4 attached to 3D model, but should be looking at ground
-	cam4.lookAt(ofVec3f(cam4.getPosition().x, cam4.getPosition().y - 10, cam4.getPosition().z));
 }
 //--------------------------------------------------------------
 void ofApp::draw(){
-	
-//	ofBackgroundGradient(ofColor(20), ofColor(0));   // pick your own backgroujnd
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//	ofBackgroundGradient(ofColor(20), ofColor(0));   // pick your own background
 	ofBackground(ofColor::black);
 //	cout << ofGetFrameRate() << endl;
 
@@ -198,8 +209,6 @@ void ofApp::draw(){
 		cam2.begin();
 	else if (camNum == 3)
 		cam3.begin();
-	else if (camNum == 4)
-		cam4.begin();
 
 	ofPushMatrix();
 	
@@ -216,6 +225,7 @@ void ofApp::draw(){
 	}
 	else {
 		ofEnableLighting();              // shaded mode
+		
 		moon.drawFaces();
 		lander.drawFaces();
 		if (bRoverLoaded) {
@@ -263,7 +273,7 @@ void ofApp::draw(){
 	for (int i = 0; i < level3.size(); i++)
 		drawBox(level3[i]);
 	
-	drawOct(root, 5, 0);
+	//drawOct(root, 5, 0);
 	
 	//This was what I originally used to test the drawing while I was debugging the recursion draw
 	/*for (int i = 0; i < 8; i++) {
@@ -279,17 +289,16 @@ void ofApp::draw(){
 	}*/
 
 	emitter.draw();//draw emitter
-
+	sys.draw();
+	engine.draw();
 	ofPopMatrix();
-
+	//gui.draw();
 	if (camNum == 1)
 		cam.end();
 	else if (camNum == 2)
 		cam2.end();
 	else if (camNum == 3)
 		cam3.end();
-	else if (camNum == 4)
-		cam4.end();
 	
 }
 
@@ -324,6 +333,30 @@ void ofApp::drawAxis(ofVec3f location) {
 void ofApp::keyPressed(int key) {
 
 	switch (key) {
+	case OF_KEY_UP:
+		//playSound();
+		thruster.add(ofVec3f(0, .5, 0));
+		engine.setVelocity(ofVec3f(0, -5, 0));
+		engine.start();
+		break;
+	case OF_KEY_DOWN:
+		//playSound();
+		thruster.add(ofVec3f(0, -.5, 0));
+		engine.setVelocity(ofVec3f(0, 5, 0));
+		engine.start();
+		break;
+	case OF_KEY_LEFT:
+		//playSound();
+		thruster.add(ofVec3f(-.5, 0, 0));
+		engine.setVelocity(ofVec3f(5, 0, 0));
+		engine.start();
+		break;
+	case OF_KEY_RIGHT:
+		//playSound();
+		thruster.add(ofVec3f(.3, 0, 0));
+		engine.setVelocity(ofVec3f(-2, 0, 0));
+		engine.start();
+		break;
 	case '1':
 		camNum = 1; // Pressing number key changes value of camNum
 		break;
@@ -332,9 +365,6 @@ void ofApp::keyPressed(int key) {
 		break;
 	case '3':
 		camNum = 3;
-		break;
-	case '4':
-		camNum = 4;
 		break;
 	case 'C':
 	case 'c':
@@ -356,7 +386,7 @@ void ofApp::keyPressed(int key) {
 		savePicture();
 		break;
 	case 't':
-		cam.lookAt(lander.getPosition()); // Free camera will look at 3D model
+		setCameraTarget();
 		break;
 	case 'u':
 		break;
@@ -369,6 +399,7 @@ void ofApp::keyPressed(int key) {
 		toggleWireframeMode();
 		break;
 	case ' ':
+		//lander.setPosition(0, 0, 0);
 		emitter.start();
 	case OF_KEY_ALT:
 		cam.enableMouseInput();
@@ -399,7 +430,8 @@ void ofApp::togglePointsDisplay() {
 }
 
 void ofApp::keyReleased(int key) {
-
+	engine.stop();
+	thruster.set(ofVec3f(0, 0, 0));
 	switch (key) {
 	
 	case OF_KEY_ALT:
@@ -740,4 +772,31 @@ void ofApp::recSearch(Ray ray, TreeNode &root, ofVec3f &selected) {
 		}
 	}
 
+}
+
+bool ofApp::intersect(const ofVec3f &point, TreeNode & node, ofVec3f & selected)
+{
+	bool result = false;
+	Vector3 p = Vector3(point.x, point.y, point.z);
+	for (int i = 0; i < node.children.size(); i++) {
+		if (node.children[i].Box.inside(p)) {
+			if (node.children[i].children.size() == 0) {
+				result = true;
+				return result;
+			}
+			else {
+				intersect(point, node.children[i], selected);
+			}
+		}
+	}
+	
+}
+
+void ofApp::collisionDetect()
+{
+	ofVec3f node;
+	if(intersect(sys.particles[0].position, root, node)) {
+		//bCollision = true;
+		cout << "collision" << endl;
+	}
 }
