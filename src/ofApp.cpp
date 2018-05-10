@@ -19,8 +19,8 @@
 //  Please document/comment all of your work !
 //  Have Fun !!
 //
-//  Student Name:   Justin M. Armijo
-//  Date: 19 April 2018
+//  Student Name:   Justin M. Armijo, Luis Rios
+//  Date: 10 May 2018
 
 
 #include "ofApp.h"
@@ -62,6 +62,12 @@ void ofApp::setup(){
 	cam3.setNearClip(.1);
 	cam3.setFov(80);
 	cam3.disableMouseInput();
+
+	// Set up Camera 4
+	cam4.setDistance(50);
+	cam4.setNearClip(.1);
+	cam4.setFov(80);
+	cam4.disableMouseInput();
 
 	// Setup 3 - Light System
 	// 
@@ -135,21 +141,22 @@ void ofApp::setup(){
 	lander.setScaleNormalization(false);
 	moon.loadModel("geo/moon-houdini.obj");
 	moon.setScaleNormalization(false);
-	
+
 
 	ship.position.set(0, 50, 0);
 	ship.lifespan = 1000000;
-	ship.radius =.1;
-	
-	lander.setPosition(ship.position.x,25,ship.position.z);
+	ship.radius = .1;
+
+	lander.setPosition(ship.position.x, 25, ship.position.z);
 	sys.add(ship);
 	engine.setRate(20);
 	engine.setParticleRadius(.10);
 	engine.visible = false;
 	sys.addForce(&thruster);
 	sys.addForce(new GravityForce(ofVec3f(0, -gravity, 0)));
+
 	boundingBox = meshBounds(moon.getMesh(0));
-	
+
 	//  Test Box Subdivide
 	//
 	//subDivideBox8(boundingBox, level1);
@@ -175,6 +182,7 @@ void ofApp::update() {
 	engine.setPosition(sys.particles[0].position);
 	emitter.update();
 	ofSeedRandom();
+
 	collisionDetect();
 	engine.update();
 	//First emitter
@@ -187,15 +195,19 @@ void ofApp::update() {
 	emitter.setParticleRadius(radius);
 	emitter.setMass(mass);
 	emitter.update();
+
 	//emitter.setPosition(ofVec3f(v.x, v.y, v.z));
-	//cam2.lookAt(lander.getPosition()); // this should be keeping track of the 3D model
-	cam2.lookAt(keyLight.getPosition()); // testing it by looking at a light, uncomment top to keep track of 3D model
+	cam2.lookAt(lander.getPosition()); // this should be keeping track of the 3D model
+	//cam2.lookAt(keyLight.getPosition()); // testing it by looking at a light, uncomment top to keep track of 3D model
 	cam3.setPosition(lander.getPosition()); // camera 3 should be attached to 3D model, would need to test with moving model
+	cam4.setPosition(lander.getPosition()); // camera 4 attached to 3D model, but should be looking at ground
+	cam4.lookAt(ofVec3f(cam4.getPosition().x, cam4.getPosition().y - 10, cam4.getPosition().z));
 }
 //--------------------------------------------------------------
 void ofApp::draw(){
+	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//	ofBackgroundGradient(ofColor(20), ofColor(0));   // pick your own background
+//	ofBackgroundGradient(ofColor(20), ofColor(0));   // pick your own backgroujnd
 	ofBackground(ofColor::black);
 //	cout << ofGetFrameRate() << endl;
 
@@ -209,6 +221,8 @@ void ofApp::draw(){
 		cam2.begin();
 	else if (camNum == 3)
 		cam3.begin();
+	else if (camNum == 4)
+		cam4.begin();
 
 	ofPushMatrix();
 	
@@ -225,7 +239,6 @@ void ofApp::draw(){
 	}
 	else {
 		ofEnableLighting();              // shaded mode
-		
 		moon.drawFaces();
 		lander.drawFaces();
 		if (bRoverLoaded) {
@@ -289,9 +302,11 @@ void ofApp::draw(){
 	}*/
 
 	emitter.draw();//draw emitter
+
 	sys.draw();
 	engine.draw();
 	ofPopMatrix();
+
 	//gui.draw();
 	if (camNum == 1)
 		cam.end();
@@ -299,6 +314,8 @@ void ofApp::draw(){
 		cam2.end();
 	else if (camNum == 3)
 		cam3.end();
+	else if (camNum == 4)
+		cam4.end();
 	
 }
 
@@ -366,6 +383,9 @@ void ofApp::keyPressed(int key) {
 	case '3':
 		camNum = 3;
 		break;
+	case '4':
+		camNum = 4;
+		break;
 	case 'C':
 	case 'c':
 		if (cam.getMouseInputEnabled()) cam.disableMouseInput();
@@ -386,7 +406,7 @@ void ofApp::keyPressed(int key) {
 		savePicture();
 		break;
 	case 't':
-		setCameraTarget();
+		cam.lookAt(lander.getPosition()); // Free camera will look at 3D model
 		break;
 	case 'u':
 		break;
@@ -789,13 +809,13 @@ bool ofApp::intersect(const ofVec3f &point, TreeNode & node, ofVec3f & selected)
 			}
 		}
 	}
-	
+
 }
 
 void ofApp::collisionDetect()
 {
 	ofVec3f node;
-	if(intersect(sys.particles[0].position, root, node)) {
+	if (intersect(sys.particles[0].position, root, node)) {
 		//bCollision = true;
 		cout << "collision" << endl;
 	}
