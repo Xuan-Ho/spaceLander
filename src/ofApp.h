@@ -50,11 +50,11 @@ class ofApp : public ofBaseApp{
 		bool mouseIntersectPlane(ofVec3f planePoint, ofVec3f planeNorm, ofVec3f &point);
 		void drawOct(TreeNode & node, int numLevels, int level);
 		void recSearch(Ray ray, TreeNode &node, ofVec3f &selected);
+
 		bool intersect(const ofVec3f &point, TreeNode & node, ofVec3f &selected);
 		void collisionDetect();
-		ofEasyCam cam, cam2, cam3; // Added new cameras
+		ofEasyCam cam, cam2, cam3, cam4; // Added new cameras
 		int camNum = 1; // Value used to cycle through cameras
-		//ofPoint modelPos; // Value will keep track of the position of the 3D model may not be necessary
 
 		ofLight light;
 		Box boundingBox;
@@ -101,13 +101,13 @@ class ofApp : public ofBaseApp{
 		ofxFloatSlider rate;
 		ofxFloatSlider restitution;
 		ofxPanel gui;
-		
+
 		ParticleSystem sys;
 		ThrusterForce thruster;
 		ParticleEmitter engine;
 		Particle ship;
+		
 		ImpulseForce impulseForce;
 		GravityForce *grav;
 		bool bCollision;
-
 };

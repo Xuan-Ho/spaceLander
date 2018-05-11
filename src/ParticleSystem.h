@@ -79,6 +79,7 @@ public:
 	ThrusterForce() {}
 	void updateForce(Particle *);
 };
+
 class ImpulseForce : public ParticleForce {  //By Justin Armijo
 public:
 	ImpulseForce() {
@@ -95,4 +96,3 @@ public:
 	}
 	ofVec3f force;
 };
-

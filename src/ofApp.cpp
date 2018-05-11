@@ -19,8 +19,8 @@
 //  Please document/comment all of your work !
 //  Have Fun !!
 //
-//  Student Name:   Justin M. Armijo
-//  Date: 19 April 2018
+//  Student Name:   Justin M. Armijo, Luis Rios, Xuan Ho
+//  Date: 10 May 2018
 
 
 #include "ofApp.h"
@@ -52,16 +52,22 @@ void ofApp::setup(){
 	ofEnableLighting();
 
 	// Set up Camera 2
-	cam2.setDistance(30);
+	cam2.setDistance(50);
 	cam2.setNearClip(.1);
 	cam2.setFov(80);
 	cam2.disableMouseInput();
 
 	// Set up Camera 3
-	cam3.setDistance(50);
+	cam3.setDistance(10);
 	cam3.setNearClip(.1);
 	cam3.setFov(80);
 	cam3.disableMouseInput();
+
+	// Set up Camera 4
+	cam4.setDistance(50);
+	cam4.setNearClip(.1);
+	cam4.setFov(80);
+	cam4.disableMouseInput();
 
 	// Setup 3 - Light System
 	// 
@@ -136,22 +142,25 @@ void ofApp::setup(){
 	lander.setScaleNormalization(false);
 	moon.loadModel("geo/moon-houdini.obj");
 	moon.setScaleNormalization(false);
-	
+
+
 	//This block of code by Justin Armijo
 	ship.position.set(0, 20, 0);
 	ship.lifespan = 1000000;
-	ship.radius =.1;
+	
+	ship.radius = .1;
 	grav = new GravityForce(ofVec3f(0, -gravity, 0));
-	lander.setPosition(ship.position.x,25,ship.position.z);
+	lander.setPosition(ship.position.x, 25, ship.position.z);
 	sys.add(ship);
 	engine.setRate(20);
 	engine.setParticleRadius(.10);
 	engine.visible = false;
 	sys.addForce(&thruster);
+	
 	sys.addForce(grav);
 	sys.addForce(&impulseForce);
 	boundingBox = meshBounds(moon.getMesh(0));
-	
+
 	//  Test Box Subdivide
 	//
 	//subDivideBox8(boundingBox, level1);
@@ -179,13 +188,11 @@ void ofApp::update() {
 	engine.setPosition(sys.particles[0].position);
 	emitter.update();
 	ofSeedRandom();
+
 	engine.update();
 	//First emitter
 	lander.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
 	sys.update();
-
-
-
 	moon.update();
 	emitter.setLifespan(lifespan);
 	emitter.setVelocity(velocity);
@@ -193,21 +200,23 @@ void ofApp::update() {
 	emitter.setParticleRadius(radius);
 	emitter.setMass(mass);
 	emitter.update();
+
 	//emitter.setPosition(ofVec3f(v.x, v.y, v.z));
-	//cam2.lookAt(lander.getPosition()); // this should be keeping track of the 3D model
-	cam2.lookAt(keyLight.getPosition()); // testing it by looking at a light, uncomment top to keep track of 3D model
-	cam3.setPosition(lander.getPosition()); // camera 3 should be attached to 3D model, would need to test with moving model
-	collisionDetect();
+	cam2.lookAt(lander.getPosition()); // this should be keeping track of the 3D model
+	cam3.setPosition((lander.getPosition() + ofVec3f(0, 0, 10))); // camera 3 should be attached to 3D model, would need to test with moving model
+	cam4.setPosition(lander.getPosition()); // camera 4 attached to 3D model, but should be looking at ground
+	cam4.lookAt(ofVec3f(cam4.getPosition().x, cam4.getPosition().y - 10, cam4.getPosition().z));
 }
 //--------------------------------------------------------------
 void ofApp::draw(){
+	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//	ofBackgroundGradient(ofColor(20), ofColor(0));   // pick your own background
+//	ofBackgroundGradient(ofColor(20), ofColor(0));   // pick your own backgroujnd
 	ofBackground(ofColor::black);
 //	cout << ofGetFrameRate() << endl;
 
 	// draw the GUI
-	if (!bHide) gui.draw();
+	//if (!bHide) gui.draw();
 
 	// If statement used to display camera based on camNum
 	if (camNum == 1)
@@ -216,6 +225,8 @@ void ofApp::draw(){
 		cam2.begin();
 	else if (camNum == 3)
 		cam3.begin();
+	else if (camNum == 4)
+		cam4.begin();
 
 	ofPushMatrix();
 	
@@ -232,14 +243,13 @@ void ofApp::draw(){
 	}
 	else {
 		ofEnableLighting();              // shaded mode
-		
 		moon.drawFaces();
 		lander.drawFaces();
 		if (bRoverLoaded) {
 			lander.drawFaces();
 			if (!bTerrainSelected) drawAxis(lander.getPosition());
 		}
-		if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
+		//if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
 	}
 
 
@@ -258,11 +268,12 @@ void ofApp::draw(){
 	}
 	
 	ofNoFill();
-	ofSetColor(ofColor::white);
-	drawBox(boundingBox);
+	//ofSetColor(ofColor::white);
+	//drawBox(boundingBox);
 
 	// draw all the lights 
 	//
+	/*
 	ofSetColor(ofColor::aqua);
 	keyLight.draw();
 	fillLight.draw();
@@ -279,6 +290,7 @@ void ofApp::draw(){
 	ofSetColor(ofColor::yellow);
 	for (int i = 0; i < level3.size(); i++)
 		drawBox(level3[i]);
+	*/
 	
 	//drawOct(root, 5, 0);
 	
@@ -295,10 +307,12 @@ void ofApp::draw(){
 		}
 	}*/
 
-	emitter.draw();//draw emitter
-	sys.draw();
+	//emitter.draw();//draw emitter
+
+	//sys.draw();
 	engine.draw();
 	ofPopMatrix();
+
 	//gui.draw();
 	if (camNum == 1)
 		cam.end();
@@ -306,6 +320,8 @@ void ofApp::draw(){
 		cam2.end();
 	else if (camNum == 3)
 		cam3.end();
+	else if (camNum == 4)
+		cam4.end();
 	
 }
 
@@ -374,6 +390,9 @@ void ofApp::keyPressed(int key) {
 	case '3':
 		camNum = 3;
 		break;
+	case '4':
+		camNum = 4;
+		break;
 	case 'C':
 	case 'c':
 		if (cam.getMouseInputEnabled()) cam.disableMouseInput();
@@ -394,7 +413,7 @@ void ofApp::keyPressed(int key) {
 		savePicture();
 		break;
 	case 't':
-		setCameraTarget();
+		cam.lookAt(lander.getPosition()); // Free camera will look at 3D model
 		break;
 	case 'u':
 		break;
@@ -419,7 +438,7 @@ void ofApp::keyPressed(int key) {
 		engine.setVelocity(ofVec3f(0, -5, 0));
 		engine.start();
 		break;
-		emitter.start();
+		//emitter.start();
 	case OF_KEY_ALT:
 		cam.enableMouseInput();
 		bAltKeyDown = true;
@@ -560,6 +579,7 @@ void ofApp::subDivideBox8(const Box &box, vector<Box> & boxList) {
 		boxList.push_back(b[i]);
 	}
 }
+
 //By Justin Armijo
 void ofApp::buildTree(TreeNode & root, int interator)
 {
@@ -598,7 +618,6 @@ void ofApp::buildTree(TreeNode & root, int interator)
 	}
 		
 }
-//by Justin Armijo
 void ofApp::drawOct(TreeNode & node, int numLevels, int level) {
 	if (level >= numLevels) return;
 	drawBox(node.Box);
@@ -775,6 +794,7 @@ bool ofApp::mouseIntersectPlane(ofVec3f planePoint, ofVec3f planeNorm, ofVec3f &
 	rayDir.normalize();
 	return (rayIntersectPlane(rayPoint, rayDir, planePoint, planeNorm, point));
 }
+
 //by Justin Armijo
 void ofApp::recSearch(Ray ray, TreeNode &root, ofVec3f &selected) {
 	
@@ -793,7 +813,8 @@ void ofApp::recSearch(Ray ray, TreeNode &root, ofVec3f &selected) {
 	}
 
 }
-// by Justin Armijo
+
+//by Justin Armijo
 bool ofApp::intersect(const ofVec3f &point, TreeNode & node, ofVec3f & selected)
 {
 	bool result = false;
@@ -813,6 +834,7 @@ bool ofApp::intersect(const ofVec3f &point, TreeNode & node, ofVec3f & selected)
 	}
 	return result;
 }
+
 //by Justin Armijo
 void ofApp::collisionDetect()
 {
@@ -821,13 +843,11 @@ void ofApp::collisionDetect()
 	ofVec3f contactPt = sys.particles[0].position;
 	ofVec3f node;
 	//cout << intersect(contactPt, root, node) << endl;
-	if(intersect(contactPt, root, node)) {
+	if (intersect(contactPt, root, node)) {
 		cout << "collision" << endl;
-		bCollision = true;	
-		ofVec3f norm = ofVec3f(0, 1, 0); 
+		bCollision = true;
+		ofVec3f norm = ofVec3f(0, 1, 0);
 		ofVec3f f = (restitution + 1.0) * ((-vel.dot(norm))*norm);
 		impulseForce.apply(60 * f);
 	}
-	
-	
 }
