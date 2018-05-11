@@ -52,13 +52,13 @@ void ofApp::setup(){
 	ofEnableLighting();
 
 	// Set up Camera 2
-	cam2.setDistance(30);
+	cam2.setDistance(50);
 	cam2.setNearClip(.1);
 	cam2.setFov(80);
 	cam2.disableMouseInput();
 
 	// Set up Camera 3
-	cam3.setDistance(50);
+	cam3.setDistance(10);
 	cam3.setNearClip(.1);
 	cam3.setFov(80);
 	cam3.disableMouseInput();
@@ -198,8 +198,7 @@ void ofApp::update() {
 
 	//emitter.setPosition(ofVec3f(v.x, v.y, v.z));
 	cam2.lookAt(lander.getPosition()); // this should be keeping track of the 3D model
-	//cam2.lookAt(keyLight.getPosition()); // testing it by looking at a light, uncomment top to keep track of 3D model
-	cam3.setPosition(lander.getPosition()); // camera 3 should be attached to 3D model, would need to test with moving model
+	cam3.setPosition((lander.getPosition() + ofVec3f(0, 0, 10))); // camera 3 should be attached to 3D model, would need to test with moving model
 	cam4.setPosition(lander.getPosition()); // camera 4 attached to 3D model, but should be looking at ground
 	cam4.lookAt(ofVec3f(cam4.getPosition().x, cam4.getPosition().y - 10, cam4.getPosition().z));
 }
@@ -212,7 +211,7 @@ void ofApp::draw(){
 //	cout << ofGetFrameRate() << endl;
 
 	// draw the GUI
-	if (!bHide) gui.draw();
+	//if (!bHide) gui.draw();
 
 	// If statement used to display camera based on camNum
 	if (camNum == 1)
@@ -245,7 +244,7 @@ void ofApp::draw(){
 			lander.drawFaces();
 			if (!bTerrainSelected) drawAxis(lander.getPosition());
 		}
-		if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
+		//if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
 	}
 
 
@@ -264,11 +263,12 @@ void ofApp::draw(){
 	}
 	
 	ofNoFill();
-	ofSetColor(ofColor::white);
-	drawBox(boundingBox);
+	//ofSetColor(ofColor::white);
+	//drawBox(boundingBox);
 
 	// draw all the lights 
 	//
+	/*
 	ofSetColor(ofColor::aqua);
 	keyLight.draw();
 	fillLight.draw();
@@ -285,6 +285,7 @@ void ofApp::draw(){
 	ofSetColor(ofColor::yellow);
 	for (int i = 0; i < level3.size(); i++)
 		drawBox(level3[i]);
+	*/
 	
 	//drawOct(root, 5, 0);
 	
@@ -301,9 +302,9 @@ void ofApp::draw(){
 		}
 	}*/
 
-	emitter.draw();//draw emitter
+	//emitter.draw();//draw emitter
 
-	sys.draw();
+	//sys.draw();
 	engine.draw();
 	ofPopMatrix();
 
